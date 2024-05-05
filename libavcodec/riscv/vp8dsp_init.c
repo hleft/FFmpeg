@@ -41,6 +41,8 @@ VP8_BILIN(16, rvv);
 VP8_BILIN(8,  rvv);
 VP8_BILIN(4,  rvv);
 
+VP8_LF(rvv);
+
 av_cold void ff_vp78dsp_init_riscv(VP8DSPContext *c)
 {
 #if HAVE_RV
@@ -128,6 +130,9 @@ av_cold void ff_vp8dsp_init_riscv(VP8DSPContext *c)
         if (flags & AV_CPU_FLAG_RVB_ADDR) {
             c->vp8_idct_dc_add4uv = ff_vp8_idct_dc_add4uv_rvv;
         }
+
+        c->vp8_v_loop_filter_simple = ff_vp8_v_loop_filter16_simple_rvv;
+        c->vp8_h_loop_filter_simple = ff_vp8_h_loop_filter16_simple_rvv;
     }
 #endif
 }

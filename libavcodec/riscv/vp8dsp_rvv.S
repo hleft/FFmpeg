@@ -94,6 +94,91 @@ func ff_vp8_idct_dc_add4uv_rvv, zve32x
         ret
 endfunc
 
+.macro filter_fmin len a f1 p0f2 q0f1
+        vsetvlstatic16  \len
+        vsext.vf2       \q0f1, \a
+        vmin.vx         \p0f2, \q0f1, a7
+        vmin.vx         \q0f1, \q0f1, t3
+        vadd.vi         \p0f2, \p0f2, 3
+        vadd.vi         \q0f1, \q0f1, 4
+        vsra.vi         \p0f2, \p0f2, 3
+        vsra.vi         \f1,   \q0f1, 3
+        vadd.vv         \p0f2, \p0f2, v8
+        vsub.vv         \q0f1, v16, \f1
+        vmax.vx         \p0f2, \p0f2, zero
+        vmax.vx         \q0f1, \q0f1, zero
+.endm
+
+.macro filter len type normal inner dst stride fE fI thresh
+.ifc \type,v
+        slli            a6, \stride, 1
+        sub             t2, \dst, a6
+        add             t4, \dst, \stride
+        sub             t1, \dst, \stride
+        vle8.v          v1, (t2)
+        vle8.v          v11, (t4)
+        vle8.v          v17, (t1)
+        vle8.v          v22, (\dst)
+.else
+        addi            t1, \dst, -1
+        addi            a6, \dst, -2
+        addi            t4, \dst, 1
+        vlse8.v         v1, (a6), \stride
+        vlse8.v         v11, (t4), \stride
+        vlse8.v         v17, (t1), \stride
+        vlse8.v         v22, (\dst), \stride
+.endif
+        vwsubu.vv       v12, v1, v11             // p1-q1
+        vwsubu.vv       v24, v22, v17            // q0-p0
+        vnclip.wi       v23, v12, 0
+        vsetvlstatic16  \len
+        // vp8_simple_limit(dst + i, stride, flim)
+        li              a7, 2
+        vneg.v          v18, v12
+        vmax.vv         v18, v18, v12
+        vneg.v          v8, v24
+        vmax.vv         v8, v8, v24
+        vsrl.vi         v18, v18, 1
+        vmacc.vx        v18, a7, v8
+        vmsleu.vx       v0, v18, \fE
+
+        li              t5, 3
+        li              a7, 124
+        li              t3, 123
+        vsext.vf2       v4, v23
+        vzext.vf2       v8, v17                  // p0
+        vzext.vf2       v16, v22                 // q0
+        vmul.vx         v30, v24, t5
+        vadd.vv         v12, v30, v4
+        vsetvlstatic8   \len
+        vnclip.wi       v11, v12, 0
+        filter_fmin     \len v11 v24 v4 v6
+        vsetvlstatic8   \len
+        vnclipu.wi      v4, v4, 0
+        vnclipu.wi      v6, v6, 0
+
+.ifc \type,v
+        vse8.v          v4, (t1), v0.t
+        vse8.v          v6, (\dst), v0.t
+.else
+        vsse8.v         v4, (t1), \stride, v0.t
+        vsse8.v         v6, (\dst), \stride, v0.t
+.endif
+
+.endm
+
+func ff_vp8_v_loop_filter16_simple_rvv, zve32x
+        vsetvlstatic8   16
+        filter 16 v 0 0 a0 a1 a2 a3 a4
+        ret
+endfunc
+
+func ff_vp8_h_loop_filter16_simple_rvv, zve32x
+        vsetvlstatic8   16
+        filter 16 h 0 0 a0 a1 a2 a3 a4
+        ret
+endfunc
+
 .macro bilin_load dst len type mn
 .ifc \type,v
         add             t5, a2, a3
