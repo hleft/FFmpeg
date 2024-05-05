@@ -229,6 +229,33 @@ endfunc
         vsra.vi         v24, v24, 1              // (f1 + 1) >> 1;
         vadd.vv         v8, v18, v24
         vsub.vv         v10, v20, v24
+        .else
+        li              t5, 27
+        li              t3, 9
+        li              a7, 18
+        vwmul.vx        v2, v11, t5
+        vwmul.vx        v6, v11, t3
+        vwmul.vx        v4, v11, a7
+        vsetvlstatic16  \len
+        li              a7, 63
+        vzext.vf2       v14, v15                 // p2
+        vzext.vf2       v24, v10                 // q2
+        vadd.vx         v2, v2, a7
+        vadd.vx         v4, v4, a7
+        vadd.vx         v6, v6, a7
+        vsra.vi         v2, v2, 7                // a0
+        vsra.vi         v12, v4, 7               // a1
+        vsra.vi         v6, v6, 7                // a2
+        vadd.vv         v14, v14, v6             // p2 + a2
+        vsub.vv         v22, v24, v6             // q2 - a2
+        vsub.vv         v10, v20, v12            // q1 - a1
+        vadd.vv         v4, v8, v2               // p0 + a0
+        vsub.vv         v6, v16, v2              // q0 - a0
+        vadd.vv         v8, v12, v18             // a1 + p1
+        vmax.vx         v4, v4, zero
+        vmax.vx         v6, v6, zero
+        vmax.vx         v14, v14, zero
+        vmax.vx         v16, v22, zero
         .endif
 
         vmax.vx         v8, v8, zero
@@ -248,6 +275,17 @@ endfunc
         vsse8.v         v5, (\dst), \stride, v0.t
         vsse8.v         v6, (a6), \stride, v0.t
         vsse8.v         v7, (t4), \stride, v0.t
+        .endif
+        .if !\inner
+        vnclipu.wi      v14, v14, 0
+        vnclipu.wi      v16, v16, 0
+        .ifc \type,v
+        vse8.v          v14, (t0), v0.t
+        vse8.v          v16, (t6), v0.t
+        .else
+        vsse8.v         v14, (t0), \stride, v0.t
+        vsse8.v         v16, (t6), \stride, v0.t
+        .endif
         .endif
 .endif
 .endm
@@ -280,6 +318,25 @@ func ff_vp8_v_loop_filter8uv_inner_rvv, zve32x
         vsetvlstatic8   8
         filter 8 v 1 1 a0 a2 a3 a4 a5
         filter 8 v 1 1 a1 a2 a3 a4 a5
+        ret
+endfunc
+
+func ff_vp8_v_loop_filter16_rvv, zve32x
+        vsetvlstatic8   16
+        filter 16 v 1 0 a0 a1 a2 a3 a4
+        ret
+endfunc
+
+func ff_vp8_h_loop_filter16_rvv, zve32x
+        vsetvlstatic8   16
+        filter 16 h 1 0 a0 a1 a2 a3 a4
+        ret
+endfunc
+
+func ff_vp8_v_loop_filter8uv_rvv, zve32x
+        vsetvlstatic8   8
+        filter 8 v 1 0 a0 a2 a3 a4 a5
+        filter 8 v 1 0 a1 a2 a3 a4 a5
         ret
 endfunc
 
