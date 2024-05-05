@@ -131,6 +131,10 @@ av_cold void ff_vp8dsp_init_riscv(VP8DSPContext *c)
             c->vp8_idct_dc_add4uv = ff_vp8_idct_dc_add4uv_rvv;
         }
 
+        c->vp8_v_loop_filter16y_inner = ff_vp8_v_loop_filter16_inner_rvv;
+        c->vp8_h_loop_filter16y_inner = ff_vp8_h_loop_filter16_inner_rvv;
+        c->vp8_v_loop_filter8uv_inner = ff_vp8_v_loop_filter8uv_inner_rvv;
+
         c->vp8_v_loop_filter_simple = ff_vp8_v_loop_filter16_simple_rvv;
         c->vp8_h_loop_filter_simple = ff_vp8_h_loop_filter16_simple_rvv;
     }
