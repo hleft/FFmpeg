@@ -81,33 +81,39 @@ void ff_tm_8x8_rvv(uint8_t *dst, ptrdiff_t stride, const uint8_t *l,
 void ff_tm_4x4_rvv(uint8_t *dst, ptrdiff_t stride, const uint8_t *l,
                    const uint8_t *a);
 
-#define VP9_8TAP_RISCV_RVV_FUNC(SIZE, type, type_idx)                         \
-void ff_put_8tap_##type##_##SIZE##h_rvv(uint8_t *dst, ptrdiff_t dststride,   \
+#define VP9_8TAP_RISCV_RVV_FUNC(SIZE, type, type_idx, min_vlen)              \
+void ff_put_8tap_##type##_##SIZE##h_rvv##min_vlen(uint8_t *dst,              \
+                                        ptrdiff_t dststride,                 \
                                         const uint8_t *src,                  \
                                         ptrdiff_t srcstride,                 \
                                         int h, int mx, int my);              \
                                                                              \
-void ff_put_8tap_##type##_##SIZE##v_rvv(uint8_t *dst, ptrdiff_t dststride,   \
+void ff_put_8tap_##type##_##SIZE##v_rvv##min_vlen(uint8_t *dst,              \
+                                        ptrdiff_t dststride,                 \
                                         const uint8_t *src,                  \
                                         ptrdiff_t srcstride,                 \
                                         int h, int mx, int my);              \
                                                                              \
-void ff_put_8tap_##type##_##SIZE##hv_rvv(uint8_t *dst, ptrdiff_t dststride,  \
+void ff_put_8tap_##type##_##SIZE##hv_rvv##min_vlen(uint8_t *dst,             \
+                                         ptrdiff_t dststride,                \
                                          const uint8_t *src,                 \
                                          ptrdiff_t srcstride,                \
                                          int h, int mx, int my);             \
                                                                              \
-void ff_avg_8tap_##type##_##SIZE##h_rvv(uint8_t *dst, ptrdiff_t dststride,   \
+void ff_avg_8tap_##type##_##SIZE##h_rvv##min_vlen(uint8_t *dst,              \
+                                        ptrdiff_t dststride,                 \
                                         const uint8_t *src,                  \
                                         ptrdiff_t srcstride,                 \
                                         int h, int mx, int my);              \
                                                                              \
-void ff_avg_8tap_##type##_##SIZE##v_rvv(uint8_t *dst, ptrdiff_t dststride,   \
+void ff_avg_8tap_##type##_##SIZE##v_rvv##min_vlen(uint8_t *dst,              \
+                                        ptrdiff_t dststride,                 \
                                         const uint8_t *src,                  \
                                         ptrdiff_t srcstride,                 \
                                         int h, int mx, int my);              \
                                                                              \
-void ff_avg_8tap_##type##_##SIZE##hv_rvv(uint8_t *dst, ptrdiff_t dststride,  \
+void ff_avg_8tap_##type##_##SIZE##hv_rvv##min_vlen(uint8_t *dst,             \
+                                         ptrdiff_t dststride,                \
                                          const uint8_t *src,                 \
                                          ptrdiff_t srcstride,                \
                                          int h, int mx, int my);
@@ -146,23 +152,41 @@ void ff_avg##SIZE##_rvv(uint8_t *dst, ptrdiff_t dststride,         \
                         const uint8_t *src, ptrdiff_t srcstride,   \
                         int h, int mx, int my);
 
-VP9_8TAP_RISCV_RVV_FUNC(64, regular, FILTER_8TAP_REGULAR);
-VP9_8TAP_RISCV_RVV_FUNC(32, regular, FILTER_8TAP_REGULAR);
-VP9_8TAP_RISCV_RVV_FUNC(16, regular, FILTER_8TAP_REGULAR);
-VP9_8TAP_RISCV_RVV_FUNC(8, regular, FILTER_8TAP_REGULAR);
-VP9_8TAP_RISCV_RVV_FUNC(4, regular, FILTER_8TAP_REGULAR);
+VP9_8TAP_RISCV_RVV_FUNC(64, regular, FILTER_8TAP_REGULAR, 128);
+VP9_8TAP_RISCV_RVV_FUNC(32, regular, FILTER_8TAP_REGULAR, 128);
+VP9_8TAP_RISCV_RVV_FUNC(16, regular, FILTER_8TAP_REGULAR, 128);
+VP9_8TAP_RISCV_RVV_FUNC(8, regular, FILTER_8TAP_REGULAR, 128);
+VP9_8TAP_RISCV_RVV_FUNC(4, regular, FILTER_8TAP_REGULAR, 128);
 
-VP9_8TAP_RISCV_RVV_FUNC(64, sharp, FILTER_8TAP_SHARP);
-VP9_8TAP_RISCV_RVV_FUNC(32, sharp, FILTER_8TAP_SHARP);
-VP9_8TAP_RISCV_RVV_FUNC(16, sharp, FILTER_8TAP_SHARP);
-VP9_8TAP_RISCV_RVV_FUNC(8, sharp, FILTER_8TAP_SHARP);
-VP9_8TAP_RISCV_RVV_FUNC(4, sharp, FILTER_8TAP_SHARP);
+VP9_8TAP_RISCV_RVV_FUNC(64, sharp, FILTER_8TAP_SHARP, 128);
+VP9_8TAP_RISCV_RVV_FUNC(32, sharp, FILTER_8TAP_SHARP, 128);
+VP9_8TAP_RISCV_RVV_FUNC(16, sharp, FILTER_8TAP_SHARP, 128);
+VP9_8TAP_RISCV_RVV_FUNC(8, sharp, FILTER_8TAP_SHARP, 128);
+VP9_8TAP_RISCV_RVV_FUNC(4, sharp, FILTER_8TAP_SHARP, 128);
 
-VP9_8TAP_RISCV_RVV_FUNC(64, smooth, FILTER_8TAP_SMOOTH);
-VP9_8TAP_RISCV_RVV_FUNC(32, smooth, FILTER_8TAP_SMOOTH);
-VP9_8TAP_RISCV_RVV_FUNC(16, smooth, FILTER_8TAP_SMOOTH);
-VP9_8TAP_RISCV_RVV_FUNC(8, smooth, FILTER_8TAP_SMOOTH);
-VP9_8TAP_RISCV_RVV_FUNC(4, smooth, FILTER_8TAP_SMOOTH);
+VP9_8TAP_RISCV_RVV_FUNC(64, smooth, FILTER_8TAP_SMOOTH, 128);
+VP9_8TAP_RISCV_RVV_FUNC(32, smooth, FILTER_8TAP_SMOOTH, 128);
+VP9_8TAP_RISCV_RVV_FUNC(16, smooth, FILTER_8TAP_SMOOTH, 128);
+VP9_8TAP_RISCV_RVV_FUNC(8, smooth, FILTER_8TAP_SMOOTH, 128);
+VP9_8TAP_RISCV_RVV_FUNC(4, smooth, FILTER_8TAP_SMOOTH, 128);
+
+VP9_8TAP_RISCV_RVV_FUNC(64, regular, FILTER_8TAP_REGULAR, 256);
+VP9_8TAP_RISCV_RVV_FUNC(32, regular, FILTER_8TAP_REGULAR, 256);
+VP9_8TAP_RISCV_RVV_FUNC(16, regular, FILTER_8TAP_REGULAR, 256);
+VP9_8TAP_RISCV_RVV_FUNC(8, regular, FILTER_8TAP_REGULAR, 256);
+VP9_8TAP_RISCV_RVV_FUNC(4, regular, FILTER_8TAP_REGULAR, 256);
+
+VP9_8TAP_RISCV_RVV_FUNC(64, sharp, FILTER_8TAP_SHARP, 256);
+VP9_8TAP_RISCV_RVV_FUNC(32, sharp, FILTER_8TAP_SHARP, 256);
+VP9_8TAP_RISCV_RVV_FUNC(16, sharp, FILTER_8TAP_SHARP, 256);
+VP9_8TAP_RISCV_RVV_FUNC(8, sharp, FILTER_8TAP_SHARP, 256);
+VP9_8TAP_RISCV_RVV_FUNC(4, sharp, FILTER_8TAP_SHARP, 256);
+
+VP9_8TAP_RISCV_RVV_FUNC(64, smooth, FILTER_8TAP_SMOOTH, 256);
+VP9_8TAP_RISCV_RVV_FUNC(32, smooth, FILTER_8TAP_SMOOTH, 256);
+VP9_8TAP_RISCV_RVV_FUNC(16, smooth, FILTER_8TAP_SMOOTH, 256);
+VP9_8TAP_RISCV_RVV_FUNC(8, smooth, FILTER_8TAP_SMOOTH, 256);
+VP9_8TAP_RISCV_RVV_FUNC(4, smooth, FILTER_8TAP_SMOOTH, 256);
 
 VP9_BILINEAR_RISCV_RVV_FUNC(64);
 VP9_BILINEAR_RISCV_RVV_FUNC(32);

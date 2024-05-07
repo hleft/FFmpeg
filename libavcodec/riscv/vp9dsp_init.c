@@ -49,7 +49,8 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
 # endif
 
 #if HAVE_RVV
-    if (bpp == 8 && (flags & AV_CPU_FLAG_RVV_I32) && ff_rv_vlen_least(128)) {
+    if (bpp == 8 && (flags & AV_CPU_FLAG_RVV_I32)) {
+    if (ff_rv_vlen_least(128)) {
 
 #define init_fpel(idx1, sz)                                           \
     dsp->mc[idx1][FILTER_8TAP_SMOOTH ][1][0][0] = ff_avg##sz##_rvv;  \
@@ -62,6 +63,26 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
     init_fpel(2, 16);
     init_fpel(3, 8);
     init_fpel(4, 4);
+
+#undef init_fpel
+
+#define init_subpel1(idx1, idx2, idxh, idxv, sz, dir, type, vlen)  \
+    dsp->mc[idx1][FILTER_8TAP_SMOOTH ][idx2][idxh][idxv] =   \
+        ff_##type##_8tap_smooth_##sz##dir##_rvv##vlen;             \
+    dsp->mc[idx1][FILTER_8TAP_REGULAR][idx2][idxh][idxv] =   \
+        ff_##type##_8tap_regular_##sz##dir##_rvv##vlen;            \
+    dsp->mc[idx1][FILTER_8TAP_SHARP  ][idx2][idxh][idxv] =   \
+        ff_##type##_8tap_sharp_##sz##dir##_rvv##vlen;
+
+#define init_subpel2(idx, idxh, idxv, dir, type, vlen)      \
+    init_subpel1(0, idx, idxh, idxv, 64, dir, type, vlen);  \
+    init_subpel1(1, idx, idxh, idxv, 32, dir, type, vlen);  \
+    init_subpel1(2, idx, idxh, idxv, 16, dir, type, vlen);  \
+    init_subpel1(3, idx, idxh, idxv,  8, dir, type, vlen);  \
+    init_subpel1(4, idx, idxh, idxv,  4, dir, type, vlen)
+
+    init_subpel2(0, 1, 0, h, put, 128);
+    init_subpel2(1, 1, 0, h, avg, 128);
 
     dsp->mc[0][FILTER_BILINEAR ][0][0][1] = ff_put_bilin_64v_rvv;
     dsp->mc[0][FILTER_BILINEAR ][0][1][0] = ff_put_bilin_64h_rvv;
@@ -84,8 +105,23 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
     dsp->mc[4][FILTER_BILINEAR ][1][0][1] = ff_avg_bilin_4v_rvv;
     dsp->mc[4][FILTER_BILINEAR ][1][1][0] = ff_avg_bilin_4h_rvv;
 
-#undef init_fpel
+    if (flags & AV_CPU_FLAG_RVB_ADDR) {
+        init_subpel2(0, 0, 1, v, put, 128);
+        init_subpel2(1, 0, 1, v, avg, 128);
     }
+
+    }
+    if (ff_rv_vlen_least(256)) {
+        init_subpel2(0, 1, 0, h, put, 256);
+        init_subpel2(1, 1, 0, h, avg, 256);
+
+        if (flags & AV_CPU_FLAG_RVB_ADDR) {
+            init_subpel2(0, 0, 1, v, put, 256);
+            init_subpel2(1, 0, 1, v, avg, 256);
+        }
+    }
+    }
+
 #endif
 #endif
 }
