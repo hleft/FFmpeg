@@ -53,6 +53,49 @@ func ff_avg\len\()_rvv, zve32x
 endfunc
 .endm
 
+.macro bilin_load dst len op type mn
+.ifc \type,v
+        add             t5, a2, a3
+.elseif \type == h
+        addi            t5, a2, 1
+.endif
+        vle8.v          v8, (a2)
+        vle8.v          v0, (t5)
+        vwmulu.vx       v16, v0, \mn
+        vwmaccsu.vx     v16, t1, v8
+        vwadd.wx        v16, v16, t4
+        vnsra.wi        v16, v16, 4
+        vadd.vv         \dst, v16, v8
+.ifc \op,avg
+        vle8.v          v16, (a0)
+        vaaddu.vv       \dst, \dst, v16
+.endif
+.endm
+
+.macro bilin_h_v len op type mn
+func ff_\op\()_bilin_\len\()\type\()_rvv, zve32x
+.ifc \op,avg
+        csrwi           vxrm, 0
+.endif
+        vsetvlstatic8   \len t0 64
+        li              t4, 8
+        neg             t1, \mn
+1:
+        addi            a4, a4, -1
+        bilin_load      v0, \len, \op, \type, \mn
+        vse8.v          v0, (a0)
+        add             a2, a2, a3
+        add             a0, a0, a1
+        bnez            a4, 1b
+
+        ret
+endfunc
+.endm
+
 .irp len 64, 32, 16, 8, 4
         copy_avg \len
+        .irp op put avg
+                bilin_h_v \len \op h a5
+                bilin_h_v \len \op v a6
+        .endr
 .endr
