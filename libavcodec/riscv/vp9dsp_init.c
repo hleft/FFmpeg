@@ -104,6 +104,16 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
     dsp->mc[4][FILTER_BILINEAR ][0][1][0] = ff_put_bilin_4h_rvv;
     dsp->mc[4][FILTER_BILINEAR ][1][0][1] = ff_avg_bilin_4v_rvv;
     dsp->mc[4][FILTER_BILINEAR ][1][1][0] = ff_avg_bilin_4h_rvv;
+    dsp->mc[0][FILTER_BILINEAR ][0][1][1] = ff_put_bilin_64hv_rvv;
+    dsp->mc[0][FILTER_BILINEAR ][1][1][1] = ff_avg_bilin_64hv_rvv;
+    dsp->mc[1][FILTER_BILINEAR ][0][1][1] = ff_put_bilin_32hv_rvv;
+    dsp->mc[1][FILTER_BILINEAR ][1][1][1] = ff_avg_bilin_32hv_rvv;
+    dsp->mc[2][FILTER_BILINEAR ][0][1][1] = ff_put_bilin_16hv_rvv;
+    dsp->mc[2][FILTER_BILINEAR ][1][1][1] = ff_avg_bilin_16hv_rvv;
+    dsp->mc[3][FILTER_BILINEAR ][0][1][1] = ff_put_bilin_8hv_rvv;
+    dsp->mc[3][FILTER_BILINEAR ][1][1][1] = ff_avg_bilin_8hv_rvv;
+    dsp->mc[4][FILTER_BILINEAR ][0][1][1] = ff_put_bilin_4hv_rvv;
+    dsp->mc[4][FILTER_BILINEAR ][1][1][1] = ff_avg_bilin_4hv_rvv;
 
     if (flags & AV_CPU_FLAG_RVB_ADDR) {
         init_subpel2(0, 0, 1, v, put, 128);

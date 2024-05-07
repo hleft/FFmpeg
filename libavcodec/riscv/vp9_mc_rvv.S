@@ -104,6 +104,39 @@ func ff_\op\()_bilin_\len\()\type\()_rvv, zve32x
 endfunc
 .endm
 
+.macro bilin_hv len op
+func ff_\op\()_bilin_\len\()hv_rvv, zve32x
+.ifc \op,avg
+        csrwi           vxrm, 0
+.endif
+        vsetvlstatic8   \len t0 64
+        neg             t1, a5
+        neg             t2, a6
+        li              t4, 8
+        bilin_load      v24, \len, put, h, a5
+        add             a2, a2, a3
+1:
+        addi            a4, a4, -1
+        bilin_load      v4, \len, put, h, a5
+        vwmulu.vx       v16, v4, a6
+        vwmaccsu.vx     v16, t2, v24
+        vwadd.wx        v16, v16, t4
+        vnsra.wi        v16, v16, 4
+        vadd.vv         v0, v16, v24
+.ifc \op,avg
+        vle8.v          v16, (a0)
+        vaaddu.vv       v0, v0, v16
+.endif
+        vse8.v          v0, (a0)
+        vmv.v.v         v24, v4
+        add             a2, a2, a3
+        add             a0, a0, a1
+        bnez            a4, 1b
+
+        ret
+endfunc
+.endm
+
 const subpel_filters_regular
         .byte  0,  0,   0, 128,   0,   0,  0,  0
         .byte  0,  1,  -5, 126,   8,  -3,  1,  0
@@ -334,6 +367,7 @@ endfunc
         .irp op put avg
                 bilin_h_v \len \op h a5
                 bilin_h_v \len \op v a6
+                bilin_hv \len \op
                 .irp name regular sharp smooth
                         .irp type h v
                                 epel \len \op \name \type 128
