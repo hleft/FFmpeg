@@ -362,6 +362,77 @@ func ff_\op\()_8tap_\name\()_\len\()\type\()_rvv\vlen\(), zve32x
 endfunc
 .endm
 
+#if __riscv_xlen == 64
+.macro epel_hv_once len name op
+        sub             a2, a2, a3
+        sub             a2, a2, a3
+        sub             a2, a2, a3
+        .irp n 0 2 4 6 8 10 12 14
+        epel_load_inc   v\n \len put \name h 1 t
+        .endr
+        addi            a4, a4, -1
+1:
+        addi            a4, a4, -1
+        epel_load       v30 \len \op \name v 0 s
+        vse8.v          v30, (a0)
+        vmv.v.v         v0, v2
+        vmv.v.v         v2, v4
+        vmv.v.v         v4, v6
+        vmv.v.v         v6, v8
+        vmv.v.v         v8, v10
+        vmv.v.v         v10, v12
+        vmv.v.v         v12, v14
+        epel_load       v14 \len put \name h 1 t
+        add             a2, a2, a3
+        add             a0, a0, a1
+        bnez            a4, 1b
+        epel_load       v30 \len \op \name v 0 s
+        vse8.v          v30, (a0)
+.endm
+
+.macro epel_hv op name len vlen
+func ff_\op\()_8tap_\name\()_\len\()hv_rvv\vlen\(), zve32x
+        addi            sp, sp, -64
+        .irp n 0,1,2,3,4,5,6,7
+        sd              s\n, \n\()<<3(sp)
+        .endr
+.if \len == 64 && \vlen < 256
+        addi            sp, sp, -48
+        .irp n 0,1,2,3,4,5
+        sd              a\n, \n\()<<3(sp)
+        .endr
+.endif
+.ifc \op,avg
+        csrwi           vxrm, 0
+.endif
+        epel_filter     \name h t
+        epel_filter     \name v s
+.if \vlen < 256
+        vsetvlstatic8   \len a6 32 m2
+.else
+        vsetvlstatic8   \len a6 64 m2
+.endif
+        epel_hv_once    \len \name \op
+.if \len == 64 && \vlen < 256
+        .irp n 0,1,2,3,4,5
+        ld              a\n, \n\()<<3(sp)
+        .endr
+        addi            sp, sp, 48
+        addi            a0, a0, 32
+        addi            a2, a2, 32
+        epel_filter     \name h t
+        epel_hv_once    \len \name \op
+.endif
+        .irp n 0,1,2,3,4,5,6,7
+        ld              s\n, \n\()<<3(sp)
+        .endr
+        addi            sp, sp, 64
+
+        ret
+endfunc
+.endm
+#endif
+
 .irp len 64, 32, 16, 8, 4
         copy_avg \len
         .irp op put avg
@@ -373,6 +444,10 @@ endfunc
                                 epel \len \op \name \type 128
                                 epel \len \op \name \type 256
                         .endr
+                        #if __riscv_xlen == 64
+                        epel_hv \op \name \len 128
+                        epel_hv \op \name \len 256
+                        #endif
                 .endr
         .endr
 .endr

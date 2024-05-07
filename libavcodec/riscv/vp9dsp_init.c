@@ -118,6 +118,10 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
     if (flags & AV_CPU_FLAG_RVB_ADDR) {
         init_subpel2(0, 0, 1, v, put, 128);
         init_subpel2(1, 0, 1, v, avg, 128);
+# if __riscv_xlen == 64
+        init_subpel2(0, 1, 1, hv, put, 128);
+        init_subpel2(1, 1, 1, hv, avg, 128);
+# endif
     }
 
     }
@@ -128,6 +132,10 @@ static av_cold void vp9dsp_mc_init_riscv(VP9DSPContext *dsp, int bpp)
         if (flags & AV_CPU_FLAG_RVB_ADDR) {
             init_subpel2(0, 0, 1, v, put, 256);
             init_subpel2(1, 0, 1, v, avg, 256);
+# if __riscv_xlen == 64
+            init_subpel2(0, 1, 1, hv, put, 256);
+            init_subpel2(1, 1, 1, hv, avg, 256);
+# endif
         }
     }
     }
